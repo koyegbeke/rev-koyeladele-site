@@ -1,0 +1,84 @@
+---
+interface Sermon {
+  slug: string;
+  title: string;
+  description: string;
+  themes: string[];
+  date: string;
+  duration: string;
+  youtubeId?: string;
+  thumbnailUrl?: string;
+}
+
+interface Props {
+  sermon: Sermon;
+}
+
+const { sermon } = Astro.props;
+
+const formattedDate = sermon.date
+  ? new Date(sermon.date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })
+  : '';
+
+const thumbnailUrl = sermon.youtubeId
+  ? `https://img.youtube.com/vi/${sermon.youtubeId}/mqdefault.jpg`
+  : sermon.thumbnailUrl || null;
+---
+
+<a href={`/sermons/${sermon.slug}`} class="group flex flex-col bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-[var(--color-cream-dark)]">
+  <!-- Thumbnail -->
+  <div class="relative aspect-video bg-forest-900 overflow-hidden">
+    {thumbnailUrl ? (
+      <img
+        src={thumbnailUrl}
+        alt={sermon.title}
+        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        loading="lazy"
+      />
+    ) : (
+      <div class="w-full h-full flex items-center justify-center bg-forest-800">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-forest-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+    )}
+    {sermon.duration && (
+      <span class="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+        {sermon.duration}
+      </span>
+    )}
+  </div>
+
+  <!-- Content -->
+  <div class="p-5 flex flex-col flex-1">
+    <!-- Themes -->
+    {sermon.themes.length > 0 && (
+      <div class="flex flex-wrap gap-2 mb-3">
+        {sermon.themes.slice(0, 2).map(theme => (
+          <span class="text-xs px-2 py-0.5 rounded-full bg-forest-50 text-forest-700 border border-forest-100">
+            {theme}
+          </span>
+        ))}
+        {sermon.themes.length > 2 && (
+          <span class="text-xs px-2 py-0.5 rounded-full bg-forest-50 text-forest-700 border border-forest-100">
+            +{sermon.themes.length - 2}
+          </span>
+        )}
+      </div>
+    )}
+
+    <h3 class="font-serif text-xl font-semibold text-forest-900 group-hover:text-forest-700 transition-colors leading-snug mb-2 flex-1"
+      style="font-family: var(--font-serif)">
+      {sermon.title}
+    </h3>
+
+    <p class="text-sm text-gray-500 leading-relaxed line-clamp-2 mb-4">
+      {sermon.description}
+    </p>
+
+    {formattedDate && (
+      <p class="text-xs text-gray-400 mt-auto">{formattedDate}</p>
+    )}
+  </div>
+</a>

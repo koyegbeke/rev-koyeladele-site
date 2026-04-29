@@ -1,0 +1,132 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import SermonCard from '../../components/SermonCard.astro';
+import { client, youtubeIdFrom } from '../../lib/sanity';
+
+const sermons = await client.fetch(`
+  *[_type == "sermon"] | order(date desc) {
+    _id,
+    title,
+    "slug": slug.current,
+    description,
+    youtubeUrl,
+    "themes": themes[]->title,
+    date,
+    duration,
+    scripture,
+    thumbnail
+  }
+`).catch(() => []);
+
+const themes = await client.fetch(`
+  *[_type == "theme"] | order(title asc) { _id, title, "slug": slug.current }
+`).catch(() => []);
+
+const mappedSermons = sermons.map((s: any) => ({
+  slug: s.slug,
+  title: s.title,
+  description: s.description || '',
+  themes: s.themes || [],
+  date: s.date || '',
+  duration: s.duration || '',
+  youtubeId: s.youtubeUrl ? youtubeIdFrom(s.youtubeUrl) : '',
+  thumbnailUrl: '',
+}));
+---
+
+<Layout title="Sermons" description="Browse the complete sermon library of Reverend Edward Adeniji Koye-Ladele — three decades of faithful preaching.">
+
+  <section class="bg-forest-900 text-white py-16">
+    <div class="max-w-6xl mx-auto px-6">
+      <p class="text-[var(--color-gold-light)] text-xs tracking-widest uppercase mb-3">The Teaching Library</p>
+      <h1 class="font-serif text-5xl md:text-6xl mb-4" style="font-family: var(--font-serif)">Sermons</h1>
+      <p class="text-forest-200 max-w-xl">
+        Three decades of ministry, faithfully recorded. Browse by theme, or search for a message.
+      </p>
+    </div>
+  </section>
+
+  <section class="border-b border-[var(--color-cream-dark)] bg-white sticky top-[65px] z-40">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+      <div class="relative flex-1 max-w-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          id="search-input"
+          type="text"
+          placeholder="Search sermons..."
+          class="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded focus:outline-none focus:border-forest-400 bg-gray-50"
+        />
+      </div>
+
+      <select id="theme-filter" class="text-sm border border-gray-200 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:border-forest-400 text-gray-700">
+        <option value="">All Themes</option>
+        {themes.map((t: any) => (
+          <option value={t.title.toLowerCase()}>{t.title}</option>
+        ))}
+      </select>
+
+      <p id="sermon-count" class="text-sm text-gray-500 ml-auto">
+        {mappedSermons.length} {mappedSermons.length === 1 ? 'sermon' : 'sermons'}
+      </p>
+    </div>
+  </section>
+
+  <section class="max-w-6xl mx-auto px-6 py-12">
+    {mappedSermons.length > 0 ? (
+      <div id="sermon-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {mappedSermons.map((sermon: any) => (
+          <div
+            class="sermon-item"
+            data-title={sermon.title.toLowerCase()}
+            data-themes={sermon.themes.join(',').toLowerCase()}
+          >
+            <SermonCard sermon={sermon} />
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div class="text-center py-24">
+        <p class="font-serif text-2xl text-forest-800 italic mb-3" style="font-family: var(--font-serif)">
+          Sermons are being added
+        </p>
+        <p class="text-gray-500 text-sm">Check back soon — the library is being built.</p>
+      </div>
+    )}
+
+    <div id="no-results" class="hidden text-center py-20">
+      <p class="text-gray-400 font-serif text-xl italic" style="font-family: var(--font-serif)">
+        No sermons found matching your search.
+      </p>
+    </div>
+  </section>
+</Layout>
+
+<script>
+  const searchInput = document.getElementById('search-input') as HTMLInputElement;
+  const themeFilter = document.getElementById('theme-filter') as HTMLSelectElement;
+  const sermonItems = document.querySelectorAll('.sermon-item') as NodeListOf<HTMLElement>;
+  const noResults = document.getElementById('no-results');
+  const sermonCount = document.getElementById('sermon-count');
+
+  function filterSermons() {
+    const query = searchInput.value.toLowerCase().trim();
+    const theme = themeFilter.value.toLowerCase();
+    let visible = 0;
+
+    sermonItems.forEach(item => {
+      const title = item.dataset.title || '';
+      const themes = item.dataset.themes || '';
+      const show = (!query || title.includes(query)) && (!theme || themes.includes(theme));
+      item.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    if (noResults) noResults.classList.toggle('hidden', visible > 0);
+    if (sermonCount) sermonCount.textContent = `${visible} ${visible === 1 ? 'sermon' : 'sermons'}`;
+  }
+
+  searchInput?.addEventListener('input', filterSermons);
+  themeFilter?.addEventListener('change', filterSermons);
+</script>

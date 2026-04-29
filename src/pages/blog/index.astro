@@ -1,0 +1,66 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { client } from '../../lib/sanity';
+
+const posts = await client.fetch(`
+  *[_type == "post"] | order(publishedAt desc) {
+    _id,
+    title,
+    "slug": slug.current,
+    publishedAt,
+    excerpt,
+    "linkedSermon": linkedSermon->{ title, "slug": slug.current }
+  }
+`).catch(() => []);
+---
+
+<Layout title="Reflections" description="Written reflections on the sermons and teachings of Reverend Edward Adeniji Koye-Ladele.">
+
+  <section class="bg-forest-900 text-white py-16">
+    <div class="max-w-6xl mx-auto px-6">
+      <p class="text-[var(--color-gold-light)] text-xs tracking-widest uppercase mb-3">The Written Word</p>
+      <h1 class="font-serif text-5xl md:text-6xl" style="font-family: var(--font-serif)">Reflections</h1>
+      <p class="text-forest-200 mt-4 max-w-xl">
+        Selected messages in written form, with links to the original sermon.
+      </p>
+    </div>
+  </section>
+
+  <div class="max-w-4xl mx-auto px-6 py-16">
+    {posts.length > 0 ? (
+      <div class="space-y-10">
+        {posts.map((post: any) => (
+          <article class="border-b border-[var(--color-cream-dark)] pb-10">
+            <a href={`/blog/${post.slug}`} class="group">
+              <p class="text-xs text-gray-400 mb-2">
+                {new Date(post.publishedAt).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+              <h2 class="font-serif text-3xl text-forest-900 group-hover:text-forest-700 transition-colors mb-3" style="font-family: var(--font-serif)">
+                {post.title}
+              </h2>
+              {post.excerpt && (
+                <p class="text-gray-600 leading-relaxed mb-4">{post.excerpt}</p>
+              )}
+              {post.linkedSermon && (
+                <p class="text-xs text-gray-400 mb-3">
+                  Based on: <span class="text-forest-600">{post.linkedSermon.title}</span>
+                </p>
+              )}
+              <span class="text-sm text-[var(--color-gold)] group-hover:text-[var(--color-gold-dark)] transition-colors">
+                Read more →
+              </span>
+            </a>
+          </article>
+        ))}
+      </div>
+    ) : (
+      <div class="text-center py-24">
+        <p class="font-serif text-2xl text-forest-800 italic mb-3" style="font-family: var(--font-serif)">
+          Reflections are being written
+        </p>
+        <p class="text-gray-500 text-sm">Check back soon for written reflections on his teachings.</p>
+      </div>
+    )}
+  </div>
+
+</Layout>

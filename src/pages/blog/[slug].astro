@@ -1,0 +1,85 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { client } from '../../lib/sanity';
+import { PortableText } from '@portabletext/react';
+
+export async function getStaticPaths() {
+  const posts = await client.fetch(`
+    *[_type == "post"] {
+      "slug": slug.current,
+      title,
+      publishedAt,
+      excerpt,
+      body,
+      "linkedSermon": linkedSermon->{ title, "slug": slug.current }
+    }
+  `).catch(() => []);
+
+  return posts.map((post: any) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+
+const formattedDate = post.publishedAt
+  ? new Date(post.publishedAt).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })
+  : '';
+---
+
+<Layout title={post.title} description={post.excerpt}>
+
+  <div class="bg-white border-b border-[var(--color-cream-dark)]">
+    <div class="max-w-6xl mx-auto px-6 py-3 text-sm text-gray-500">
+      <a href="/blog" class="hover:text-forest-700 transition-colors">← Back to Reflections</a>
+    </div>
+  </div>
+
+  <div class="max-w-3xl mx-auto px-6 py-16">
+
+    {formattedDate && (
+      <p class="text-xs text-gray-400 mb-4 tracking-wide">{formattedDate}</p>
+    )}
+
+    <h1 class="font-serif text-4xl md:text-5xl text-forest-900 leading-tight mb-6" style="font-family: var(--font-serif)">
+      {post.title}
+    </h1>
+
+    {post.excerpt && (
+      <p class="font-serif text-xl text-gray-500 italic leading-relaxed border-l-4 border-[var(--color-gold)] pl-6 mb-10" style="font-family: var(--font-serif)">
+        {post.excerpt}
+      </p>
+    )}
+
+    <div class="prose prose-lg max-w-none text-gray-700 leading-relaxed">
+      {post.body?.map((block: any) => {
+        if (block._type === 'block') {
+          if (block.style === 'h2') {
+            return <h2 class="font-serif text-2xl text-forest-900 mt-10 mb-4" style="font-family: var(--font-serif)">{block.children?.map((c: any) => c.text).join('')}</h2>
+          }
+          if (block.style === 'h3') {
+            return <h3 class="font-serif text-xl text-forest-800 mt-8 mb-3" style="font-family: var(--font-serif)">{block.children?.map((c: any) => c.text).join('')}</h3>
+          }
+          if (block.style === 'blockquote') {
+            return <blockquote class="border-l-4 border-[var(--color-gold)] pl-6 my-8 font-serif text-xl italic text-gray-600" style="font-family: var(--font-serif)">{block.children?.map((c: any) => c.text).join('')}</blockquote>
+          }
+          return <p class="mb-5">{block.children?.map((c: any) => c.text).join('')}</p>
+        }
+        return null;
+      })}
+    </div>
+
+    {post.linkedSermon && (
+      <div class="mt-12 bg-forest-50 rounded-lg p-6 border border-forest-100">
+        <p class="text-xs text-forest-600 uppercase tracking-widest mb-2">Listen to the Sermon</p>
+        <a href={`/sermons/${post.linkedSermon.slug}`}
+          class="font-serif text-xl text-forest-800 hover:text-forest-600 transition-colors" style="font-family: var(--font-serif)">
+          {post.linkedSermon.title} →
+        </a>
+      </div>
+    )}
+
+  </div>
+
+</Layout>

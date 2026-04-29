@@ -1,0 +1,154 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { client, urlFor, youtubeIdFrom } from '../../lib/sanity';
+
+export async function getStaticPaths() {
+  const sermons = await client.fetch(`
+    *[_type == "sermon"] {
+      "slug": slug.current,
+      title,
+      description,
+      youtubeUrl,
+      "audioUrl": audioFile.asset->url,
+      "themes": themes[]->title,
+      date,
+      duration,
+      scripture,
+      thumbnail
+    }
+  `).catch(() => []);
+
+  return sermons.map((sermon: any) => ({
+    params: { slug: sermon.slug },
+    props: { sermon },
+  }));
+}
+
+const { sermon } = Astro.props;
+
+const youtubeId = sermon.youtubeUrl ? youtubeIdFrom(sermon.youtubeUrl) : null;
+
+const formattedDate = sermon.date
+  ? new Date(sermon.date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })
+  : '';
+---
+
+<Layout title={sermon.title} description={sermon.description}>
+
+  <div class="bg-white border-b border-[var(--color-cream-dark)]">
+    <div class="max-w-6xl mx-auto px-6 py-3 text-sm text-gray-500">
+      <a href="/sermons" class="hover:text-forest-700 transition-colors">← Back to Sermons</a>
+    </div>
+  </div>
+
+  <div class="max-w-6xl mx-auto px-6 py-12">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+
+      <div class="lg:col-span-2">
+
+        <!-- Video player -->
+        <div class="aspect-video bg-forest-900 rounded-lg overflow-hidden mb-8 flex items-center justify-center">
+          {youtubeId ? (
+            <iframe
+              src={`https://www.youtube.com/embed/${youtubeId}`}
+              title={sermon.title}
+              class="w-full h-full"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+            />
+          ) : sermon.audioUrl ? (
+            <div class="w-full p-8">
+              <p class="text-forest-300 text-sm mb-4 text-center font-serif italic" style="font-family: var(--font-serif)">Audio Message</p>
+              <audio controls class="w-full">
+                <source src={sermon.audioUrl} type="audio/mpeg" />
+              </audio>
+            </div>
+          ) : (
+            <div class="text-center text-forest-500 p-8">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p class="text-forest-400 font-serif text-lg italic" style="font-family: var(--font-serif)">Media coming soon</p>
+            </div>
+          )}
+        </div>
+
+        <!-- Themes -->
+        {sermon.themes?.length > 0 && (
+          <div class="flex flex-wrap gap-2 mb-4">
+            {sermon.themes.map((theme: string) => (
+              <a href={`/sermons?theme=${encodeURIComponent(theme.toLowerCase())}`}
+                class="text-xs px-3 py-1 rounded-full bg-forest-50 text-forest-700 border border-forest-100 hover:bg-forest-100 transition-colors">
+                {theme}
+              </a>
+            ))}
+          </div>
+        )}
+
+        <!-- Title -->
+        <h1 class="font-serif text-4xl md:text-5xl text-forest-900 leading-tight mb-4" style="font-family: var(--font-serif)">
+          {sermon.title}
+        </h1>
+
+        <div class="flex flex-wrap items-center gap-3 text-sm text-gray-400 mb-8">
+          {formattedDate && <span>{formattedDate}</span>}
+          {sermon.duration && <span>· {sermon.duration}</span>}
+          {sermon.scripture && <span class="text-[var(--color-gold)] font-medium">· {sermon.scripture}</span>}
+        </div>
+
+        {sermon.description && (
+          <div class="border-l-4 border-[var(--color-gold)] pl-6 mb-8">
+            <p class="text-gray-600 leading-relaxed font-serif text-xl italic" style="font-family: var(--font-serif)">
+              {sermon.description}
+            </p>
+          </div>
+        )}
+
+      </div>
+
+      <!-- Sidebar -->
+      <aside class="space-y-8">
+        <div class="bg-white rounded-lg p-6 border border-[var(--color-cream-dark)]">
+          <h3 class="font-serif text-lg text-forest-900 mb-4 border-b border-[var(--color-cream-dark)] pb-3" style="font-family: var(--font-serif)">
+            About this Sermon
+          </h3>
+          <dl class="space-y-3 text-sm">
+            {formattedDate && (
+              <div>
+                <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Preached</dt>
+                <dd class="text-gray-700">{formattedDate}</dd>
+              </div>
+            )}
+            {sermon.duration && (
+              <div>
+                <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Duration</dt>
+                <dd class="text-gray-700">{sermon.duration}</dd>
+              </div>
+            )}
+            {sermon.scripture && (
+              <div>
+                <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Scripture</dt>
+                <dd class="text-[var(--color-gold-dark)] font-medium">{sermon.scripture}</dd>
+              </div>
+            )}
+            <div>
+              <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Speaker</dt>
+              <dd class="text-gray-700">Rev. Edward Adeniji Koye-Ladele</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="bg-forest-900 rounded-lg p-6 text-white">
+          <blockquote class="font-serif text-lg italic leading-relaxed text-forest-100" style="font-family: var(--font-serif)">
+            "The word of God is alive and active, sharper than any double-edged sword."
+          </blockquote>
+          <p class="text-xs text-forest-500 mt-3">Hebrews 4:12</p>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+</Layout>
