@@ -2,14 +2,16 @@
 import Layout from '../layouts/Layout.astro';
 import { client, urlFor } from '../lib/sanity';
 
-const photos = await client.fetch(`
-  *[_type == "galleryPhoto"] | order(order asc, date desc) {
-    _id,
+const rawPhotos = await client.fetch(`
+  *[_type == "gallery"][0].photos[] {
+    _key,
     image,
     caption,
     date
   }
-`).catch(() => []);
+`).catch(() => null);
+
+const photos = rawPhotos ?? [];
 ---
 
 <Layout title="Gallery" description="A photographic record of the life and ministry of Reverend Edward Adeniji Koye-Ladele.">
@@ -27,7 +29,7 @@ const photos = await client.fetch(`
   <div class="max-w-6xl mx-auto px-6 py-16">
     {photos.length > 0 ? (
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {photos.map((photo: any) => (
+        {photos.map((photo: any, i: number) => (
           <div class="group relative aspect-square bg-forest-100 rounded-lg overflow-hidden">
             <img
               src={urlFor(photo.image).width(400).height(400).fit('crop').url()}
