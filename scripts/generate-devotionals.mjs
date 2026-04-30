@@ -388,6 +388,47 @@ const SCRIPTURES = [
   { ref: 'Psalm 22:4-5', theme: 'trust' },
   { ref: 'Proverbs 29:25', theme: 'trust' },
   { ref: 'Psalm 46:10', theme: 'trust' },
+
+  // OBEDIENCE & CHARACTER
+  { ref: 'John 14:15', theme: 'character' },
+  { ref: '1 Samuel 15:22', theme: 'character' },
+  { ref: 'Micah 6:8', theme: 'character' },
+  { ref: 'Proverbs 11:3', theme: 'character' },
+  { ref: 'Romans 12:2', theme: 'character' },
+  { ref: 'Galatians 5:16', theme: 'character' },
+  { ref: 'Colossians 3:12', theme: 'character' },
+  { ref: '2 Peter 1:5-7', theme: 'character' },
+
+  // GRATITUDE & TESTIMONY
+  { ref: 'Psalm 107:8', theme: 'gratitude' },
+  { ref: '1 Thessalonians 5:18', theme: 'gratitude' },
+  { ref: 'Psalm 92:1-2', theme: 'gratitude' },
+  { ref: 'Revelation 19:5', theme: 'gratitude' },
+  { ref: 'Luke 17:15-16', theme: 'gratitude' },
+  { ref: 'Psalm 35:18', theme: 'gratitude' },
+  { ref: 'Daniel 6:10', theme: 'gratitude' },
+
+  // MISSION & SERVICE
+  { ref: 'Matthew 28:19-20', theme: 'mission' },
+  { ref: 'Mark 16:15', theme: 'mission' },
+  { ref: 'Isaiah 6:8', theme: 'mission' },
+  { ref: 'Romans 10:14-15', theme: 'mission' },
+  { ref: 'Acts 20:24', theme: 'mission' },
+  { ref: 'Proverbs 11:30', theme: 'mission' },
+  { ref: 'Daniel 12:3', theme: 'mission' },
+  { ref: '2 Timothy 4:5', theme: 'mission' },
+  { ref: 'Matthew 5:14-16', theme: 'mission' },
+  { ref: 'John 4:35', theme: 'mission' },
+
+  // HUMILITY & SURRENDER
+  { ref: 'James 4:10', theme: 'humility' },
+  { ref: 'Proverbs 15:33', theme: 'humility' },
+  { ref: 'Matthew 5:3', theme: 'humility' },
+  { ref: '1 Peter 5:6', theme: 'humility' },
+  { ref: 'Isaiah 66:2', theme: 'humility' },
+  { ref: 'Philippians 2:3-4', theme: 'humility' },
+  { ref: 'Psalm 25:9', theme: 'humility' },
+  { ref: 'Luke 14:11', theme: 'humility' },
 ];
 
 // Shuffle deterministically so themes are well-distributed across the year
@@ -484,11 +525,19 @@ Important: verse text must be exact KJV. Keep each devotional tight — no more 
 async function main() {
   console.log('Generating 365 daily devotionals...\n');
 
-  // Load existing progress
+  // Load existing progress — prefer progress file, fall back to output file
   let existing = {};
   if (fs.existsSync(PROGRESS_FILE)) {
     existing = JSON.parse(fs.readFileSync(PROGRESS_FILE, 'utf8'));
-    console.log(`Resuming — ${Object.keys(existing).length} entries already done.\n`);
+    console.log(`Resuming from progress file — ${Object.keys(existing).length} entries already done.\n`);
+  } else if (fs.existsSync(OUTPUT_FILE)) {
+    const outputData = JSON.parse(fs.readFileSync(OUTPUT_FILE, 'utf8'));
+    if (Array.isArray(outputData) && outputData.length > 0) {
+      for (const entry of outputData) {
+        existing[entry.day] = entry;
+      }
+      console.log(`Resuming from output file — ${outputData.length} entries already done.\n`);
+    }
   }
 
   const BATCH_SIZE = 5;
