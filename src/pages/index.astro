@@ -1,7 +1,19 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import SermonCard from '../components/SermonCard.astro';
-import { client, youtubeIdFrom } from '../lib/sanity';
+import { client, urlFor, youtubeIdFrom } from '../lib/sanity';
+
+const settings = await client.fetch(`
+  *[_type == "siteSettings"][0] {
+    heroImage,
+    heroQuote,
+    heroQuoteSource
+  }
+`).catch(() => null);
+
+const heroImageUrl = settings?.heroImage
+  ? urlFor(settings.heroImage).width(600).height(800).fit('crop').url()
+  : null;
 
 const rawFeatured = await client.fetch(`
   *[_type == "sermon" && featured == true] | order(date desc) [0...3] {
@@ -125,13 +137,23 @@ const featuredSermons = rawFeatured.map((s: any) => ({
             </svg>
           </a>
         </div>
-        <div class="bg-forest-900 rounded-lg h-80 flex items-center justify-center border border-forest-700">
-          <div class="text-center text-forest-600">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            <p class="text-sm">Photo coming soon</p>
-          </div>
+        <div class="rounded-lg h-80 overflow-hidden border border-forest-700">
+          {heroImageUrl ? (
+            <img
+              src={heroImageUrl}
+              alt="Reverend Edward Adeniji Koye-Ladele"
+              class="w-full h-full object-cover"
+            />
+          ) : (
+            <div class="bg-forest-900 w-full h-full flex items-center justify-center">
+              <div class="text-center text-forest-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <p class="text-sm">Photo coming soon</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
