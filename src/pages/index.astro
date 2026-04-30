@@ -3,6 +3,15 @@ import Layout from '../layouts/Layout.astro';
 import SermonCard from '../components/SermonCard.astro';
 import { client, urlFor, youtubeIdFrom } from '../lib/sanity';
 
+// Daily devotional — picks by day of year, gracefully absent before generation
+let todaysDevotional: any = null;
+try {
+  const { default: all } = await import('../data/devotionals.json', { assert: { type: 'json' } });
+  const now = new Date();
+  const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000);
+  todaysDevotional = (all as any[])[(dayOfYear - 1) % all.length];
+} catch { /* not yet generated */ }
+
 const settings = await client.fetch(`
   *[_type == "siteSettings"][0] {
     heroImages,
@@ -190,6 +199,64 @@ const featuredSermons = rawFeatured.map((s: any) => ({
             dots.forEach((dot, i) => dot.addEventListener('click', () => goTo(i)));
           }
         </script>
+      </div>
+    </div>
+  </section>
+
+  <!-- Daily Devotional teaser -->
+  <section class="bg-forest-900 text-white py-20">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="max-w-3xl mx-auto text-center">
+        <p class="text-[var(--color-gold-light)] text-xs tracking-widest uppercase mb-3">Daily Devotional</p>
+        <h2 class="font-serif text-4xl md:text-5xl mb-8" style="font-family: var(--font-serif)">A Word for Today</h2>
+
+        {todaysDevotional ? (
+          <div class="text-left">
+            <div class="border-l-4 border-[var(--color-gold)] pl-6 mb-6">
+              <p class="text-[var(--color-gold-light)] text-xs tracking-widest uppercase mb-2">{todaysDevotional.reference} — KJV</p>
+              <blockquote class="font-serif text-xl md:text-2xl text-white italic leading-relaxed"
+                style="font-family: var(--font-serif)">
+                "{todaysDevotional.verse}"
+              </blockquote>
+            </div>
+            <div class="text-forest-200 leading-relaxed space-y-3 mb-8">
+              {(() => {
+                const lines: string[] = todaysDevotional.devotional.split('\n');
+                const preview: string[] = [];
+                let wordCount = 0;
+                for (const line of lines) {
+                  if (wordCount >= 60) break;
+                  if (line.trim()) {
+                    preview.push(line);
+                    wordCount += line.split(' ').length;
+                  }
+                }
+                return preview.map((line: string) => <p>{line}</p>);
+              })()}
+              <p class="text-forest-400 italic">...</p>
+            </div>
+            <div class="text-center">
+              <a href="/daily"
+                class="inline-flex items-center gap-2 px-8 py-4 border border-[var(--color-gold)] text-[var(--color-gold-light)] hover:bg-[var(--color-gold)] hover:text-white rounded transition-colors text-sm tracking-wide">
+                Read today's full devotional
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <p class="text-forest-300 italic font-serif text-xl mb-6" style="font-family: var(--font-serif)">
+              "The grass withereth, the flower fadeth: but the word of our God shall stand for ever."
+            </p>
+            <p class="text-forest-400 text-sm mb-8">Isaiah 40:8 — KJV</p>
+            <a href="/daily"
+              class="inline-flex items-center gap-2 px-8 py-4 border border-forest-600 text-forest-300 hover:border-[var(--color-gold)] hover:text-[var(--color-gold-light)] rounded transition-colors text-sm tracking-wide">
+              Daily devotionals coming soon
+            </a>
+          </div>
+        )}
       </div>
     </div>
   </section>

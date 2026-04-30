@@ -1,0 +1,92 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+// Pick today's devotional by day of year
+const now = new Date();
+const start = new Date(now.getFullYear(), 0, 0);
+const diff = now.getTime() - start.getTime();
+const dayOfYear = Math.floor(diff / 86400000);
+
+let devotional: any = null;
+try {
+  const { default: all } = await import('../data/devotionals.json', { assert: { type: 'json' } });
+  devotional = all[(dayOfYear - 1) % all.length];
+} catch {
+  // JSON not yet generated
+}
+
+const lines = devotional?.devotional?.split('\n') ?? [];
+---
+
+<Layout
+  title="Daily Devotional"
+  description="A daily word from Reverend Edward Adeniji Koye-Ladele — scripture, reflection, and prayer for today."
+>
+
+  <section class="bg-forest-900 text-white py-16">
+    <div class="max-w-3xl mx-auto px-6">
+      <p class="text-[var(--color-gold-light)] text-xs tracking-widest uppercase mb-3">Daily Devotional</p>
+      <h1 class="font-serif text-5xl md:text-6xl" style="font-family: var(--font-serif)">A Word for Today</h1>
+      <p class="text-forest-300 mt-4 text-sm">
+        {now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+      </p>
+    </div>
+  </section>
+
+  <div class="max-w-3xl mx-auto px-6 py-16">
+    {devotional ? (
+      <article class="space-y-8">
+
+        <!-- Scripture card -->
+        <div class="bg-forest-900 rounded-xl p-8 border-l-4 border-[var(--color-gold)]">
+          <p class="text-[var(--color-gold-light)] text-xs tracking-widest uppercase mb-4">Today's Scripture</p>
+          <blockquote class="font-serif text-xl md:text-2xl text-white leading-relaxed italic mb-4"
+            style="font-family: var(--font-serif)">
+            "{devotional.verse}"
+          </blockquote>
+          <p class="text-forest-400 text-sm font-medium">{devotional.reference} — KJV</p>
+        </div>
+
+        <!-- Devotional body -->
+        <div class="bg-white rounded-xl p-8 shadow-sm border border-[var(--color-cream-dark)]">
+          <div class="prose prose-lg max-w-none text-forest-800 leading-relaxed space-y-4">
+            {lines.map((line: string) => (
+              line.trim() === '' ? (
+                <div class="h-2" />
+              ) : line === line.toUpperCase() && line.trim().length > 3 ? (
+                <p class="font-semibold tracking-wide text-forest-900 text-sm">{line}</p>
+              ) : (
+                <p>{line}</p>
+              )
+            ))}
+          </div>
+        </div>
+
+        <!-- Nav -->
+        <div class="text-center pt-4">
+          <a href="/"
+            class="inline-flex items-center gap-2 text-sm text-forest-600 hover:text-forest-900 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to home
+          </a>
+        </div>
+
+      </article>
+    ) : (
+      <div class="text-center py-24">
+        <div class="w-16 h-16 bg-forest-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-forest-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        </div>
+        <p class="font-serif text-2xl text-forest-800 italic mb-2" style="font-family: var(--font-serif)">
+          Daily devotionals coming soon
+        </p>
+        <p class="text-forest-500 text-sm">Check back shortly.</p>
+      </div>
+    )}
+  </div>
+
+</Layout>
