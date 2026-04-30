@@ -1,5 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { client, urlFor } from '../lib/sanity';
+
+const settings = await client.fetch(`*[_type == "siteSettings"][0]{ heroImages }`).catch(() => null);
+const portrait = settings?.heroImages?.[0]
+  ? urlFor(settings.heroImages[0]).width(600).height(800).fit('crop').url()
+  : null;
 ---
 
 <Layout title="Biography" description="The life and ministry of Reverend Edward Adeniji Koye-Ladele — born in Ibadan, ordained 1988, a faithful minister for over three decades.">
@@ -16,13 +22,23 @@ import Layout from '../layouts/Layout.astro';
 
       <!-- Portrait column -->
       <div class="space-y-6">
-        <div class="aspect-[3/4] bg-forest-800 rounded-lg flex items-center justify-center border border-forest-700">
-          <div class="text-center text-forest-500 p-8">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            <p class="text-sm">Portrait coming soon</p>
-          </div>
+        <div class="aspect-[3/4] rounded-lg overflow-hidden border border-forest-700">
+          {portrait ? (
+            <img
+              src={portrait}
+              alt="Reverend Edward Adeniji Koye-Ladele"
+              class="w-full h-full object-cover object-top"
+            />
+          ) : (
+            <div class="w-full h-full bg-forest-800 flex items-center justify-center">
+              <div class="text-center text-forest-500 p-8">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <p class="text-sm">Portrait coming soon</p>
+              </div>
+            </div>
+          )}
         </div>
 
         <div class="bg-white rounded-lg p-6 border border-[var(--color-cream-dark)] space-y-4 text-sm">
