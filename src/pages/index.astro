@@ -5,15 +5,15 @@ import { client, urlFor, youtubeIdFrom } from '../lib/sanity';
 
 const settings = await client.fetch(`
   *[_type == "siteSettings"][0] {
-    heroImage,
+    heroImages,
     heroQuote,
     heroQuoteSource
   }
 `).catch(() => null);
 
-const heroImageUrl = settings?.heroImage
-  ? urlFor(settings.heroImage).width(600).height(800).fit('crop').url()
-  : null;
+const heroImageUrls: string[] = (settings?.heroImages ?? []).map((img: any) =>
+  urlFor(img).width(700).height(900).fit('crop').url()
+);
 
 const rawFeatured = await client.fetch(`
   *[_type == "sermon" && featured == true] | order(date desc) [0...3] {
@@ -137,15 +137,33 @@ const featuredSermons = rawFeatured.map((s: any) => ({
             </svg>
           </a>
         </div>
-        <div class="rounded-lg h-80 overflow-hidden border border-forest-700">
-          {heroImageUrl ? (
-            <img
-              src={heroImageUrl}
-              alt="Reverend Edward Adeniji Koye-Ladele"
-              class="w-full h-full object-cover"
-            />
+        <div id="hero-carousel" class="relative rounded-lg overflow-hidden border border-forest-700 aspect-[3/4] w-full max-w-sm mx-auto md:max-w-none md:aspect-auto md:min-h-[420px]">
+          {heroImageUrls.length > 0 ? (
+            <>
+              {heroImageUrls.map((url: string, i: number) => (
+                <img
+                  src={url}
+                  alt="Reverend Edward Adeniji Koye-Ladele"
+                  class="absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-1000"
+                  style={i === 0 ? "opacity:1" : "opacity:0"}
+                  data-slide={i}
+                />
+              ))}
+              {heroImageUrls.length > 1 && (
+                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                  {heroImageUrls.map((_: string, i: number) => (
+                    <button
+                      data-dot={i}
+                      class="w-2 h-2 rounded-full transition-colors duration-300"
+                      style={i === 0 ? "background:white" : "background:rgba(255,255,255,0.35)"}
+                      aria-label={`Photo ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           ) : (
-            <div class="bg-forest-900 w-full h-full flex items-center justify-center">
+            <div class="absolute inset-0 bg-forest-900 flex items-center justify-center">
               <div class="text-center text-forest-600">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -155,6 +173,23 @@ const featuredSermons = rawFeatured.map((s: any) => ({
             </div>
           )}
         </div>
+
+        <script>
+          const slides = Array.from(document.querySelectorAll<HTMLElement>('[data-slide]'));
+          const dots = Array.from(document.querySelectorAll<HTMLElement>('[data-dot]'));
+          if (slides.length > 1) {
+            let current = 0;
+            function goTo(n: number) {
+              slides[current].style.opacity = '0';
+              if (dots[current]) dots[current].style.background = 'rgba(255,255,255,0.35)';
+              current = n % slides.length;
+              slides[current].style.opacity = '1';
+              if (dots[current]) dots[current].style.background = 'white';
+            }
+            setInterval(() => goTo(current + 1), 5000);
+            dots.forEach((dot, i) => dot.addEventListener('click', () => goTo(i)));
+          }
+        </script>
       </div>
     </div>
   </section>
