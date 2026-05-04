@@ -1,0 +1,99 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { client, urlFor } from '../lib/sanity';
+
+const books = await client.fetch(`
+  *[_type == "book"] | order(order asc, title asc) {
+    _id,
+    title,
+    description,
+    cover,
+    links
+  }
+`).catch(() => []);
+---
+
+<Layout title="Books" description="Books and written works by Reverend Edward Adeniji Koye-Ladele — available to buy or download.">
+
+  <section class="bg-forest-900 text-white py-16">
+    <div class="max-w-6xl mx-auto px-6">
+      <p class="text-[var(--color-gold-light)] text-xs tracking-widest uppercase mb-3">Written Works</p>
+      <h1 class="font-serif text-5xl md:text-6xl" style="font-family: var(--font-serif)">Books</h1>
+      <p class="text-forest-300 mt-4 max-w-xl">
+        Reverend Koye-Ladele authored several books and tracts — targeted at winning souls, establishing new believers, and speaking truth to power.
+      </p>
+    </div>
+  </section>
+
+  <div class="max-w-6xl mx-auto px-6 py-16">
+    {books.length > 0 ? (
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 md:gap-10">
+        {books.map((book: any) => {
+          const coverUrl = book.cover
+            ? urlFor(book.cover).width(400).height(560).fit('crop').url()
+            : null;
+          return (
+            <div class="flex flex-col">
+              <!-- Cover -->
+              <div class="aspect-[5/7] rounded-lg overflow-hidden border border-[var(--color-cream-dark)] mb-4 shadow-sm">
+                {coverUrl ? (
+                  <img
+                    src={coverUrl}
+                    alt={book.title}
+                    class="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div class="w-full h-full bg-forest-800 flex items-center justify-center p-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-forest-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+
+              <!-- Title & description -->
+              <h2 class="font-serif text-lg text-forest-900 leading-snug mb-2" style="font-family: var(--font-serif)">
+                {book.title}
+              </h2>
+              {book.description && (
+                <p class="text-forest-600 text-sm leading-relaxed mb-3 flex-1">{book.description}</p>
+              )}
+
+              <!-- Links -->
+              {book.links?.length > 0 && (
+                <div class="flex flex-col gap-2 mt-auto pt-3">
+                  {book.links.map((link: any) => (
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="inline-flex items-center justify-center gap-1.5 px-3 py-2 border border-[var(--color-gold)] text-[var(--color-gold)] hover:bg-[var(--color-gold)] hover:text-white rounded text-xs font-medium transition-colors tracking-wide"
+                    >
+                      {link.label}
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    ) : (
+      <div class="text-center py-24">
+        <div class="w-16 h-16 bg-forest-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-forest-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        </div>
+        <p class="font-serif text-2xl text-forest-800 italic mb-2" style="font-family: var(--font-serif)">
+          Books coming soon
+        </p>
+        <p class="text-forest-500 text-sm">Check back shortly.</p>
+      </div>
+    )}
+  </div>
+
+</Layout>
