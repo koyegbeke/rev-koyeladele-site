@@ -12,6 +12,7 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@formspree/ajax": "^1.1.5",
     "@sanity/client": "^7.22.0",
     "@sanity/image-url": "^2.1.1",
     "@tailwindcss/vite": "^4.2.4",
@@ -20,6 +21,6 @@
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.91.1",
-    "vercel": "^52.0.0"
+    "vercel": "^53.4.0"
   }
 }

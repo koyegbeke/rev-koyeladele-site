@@ -15,6 +15,17 @@ const heroImageUrls: string[] = (settings?.heroImages ?? []).map((img: any) =>
   urlFor(img).width(700).height(900).fit('crop').url()
 );
 
+const latestPosts = await client.fetch(`
+  *[_type == "post"] | order(publishedAt desc) [0...2] {
+    _id,
+    title,
+    "slug": slug.current,
+    publishedAt,
+    excerpt,
+    "linkedSermon": linkedSermon->{ title, "slug": slug.current }
+  }
+`).catch(() => []);
+
 const rawFeatured = await client.fetch(`
   *[_type == "sermon" && featured == true] | order(date desc) [0...3] {
     _id,
@@ -321,11 +332,39 @@ const featuredSermons = rawFeatured.map((s: any) => ({
       <h2 class="font-serif text-4xl text-forest-900" style="font-family: var(--font-serif)">Reflections</h2>
       <p class="text-forest-600 mt-2 text-sm">Selected messages in written form, with links to the original teaching.</p>
     </div>
-    <div class="bg-[var(--color-cream-dark)] rounded-lg p-12 text-center border border-[var(--color-cream-dark)]">
-      <p class="text-forest-600 font-serif text-xl italic" style="font-family: var(--font-serif)">
-        Reflections are being prepared. Come back soon.
-      </p>
-    </div>
+    {latestPosts.length > 0 ? (
+      <div class="space-y-8">
+        {latestPosts.map((post: any) => (
+          <article class="border-b border-[var(--color-cream-dark)] pb-8">
+            <a href={`/blog/${post.slug}`} class="group">
+              <p class="text-xs text-gray-400 mb-2">
+                {new Date(post.publishedAt).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+              <h3 class="font-serif text-2xl text-forest-900 group-hover:text-forest-700 transition-colors mb-2" style="font-family: var(--font-serif)">
+                {post.title}
+              </h3>
+              {post.excerpt && (
+                <p class="text-gray-600 leading-relaxed text-sm mb-3">{post.excerpt}</p>
+              )}
+              {post.linkedSermon && (
+                <p class="text-xs text-gray-400 mb-2">
+                  Based on: <span class="text-forest-600">{post.linkedSermon.title}</span>
+                </p>
+              )}
+              <span class="text-sm text-[var(--color-gold)] group-hover:text-[var(--color-gold-dark)] transition-colors">
+                Read more →
+              </span>
+            </a>
+          </article>
+        ))}
+      </div>
+    ) : (
+      <div class="bg-[var(--color-cream-dark)] rounded-lg p-12 text-center border border-[var(--color-cream-dark)]">
+        <p class="text-forest-600 font-serif text-xl italic" style="font-family: var(--font-serif)">
+          Reflections are being prepared. Come back soon.
+        </p>
+      </div>
+    )}
     <div class="mt-6 text-right">
       <a href="/blog" class="text-sm text-forest-600 hover:text-forest-900 transition-colors">
         Visit the Reflections →
