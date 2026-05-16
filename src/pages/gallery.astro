@@ -32,9 +32,9 @@ const photos = rawPhotos ?? [];
         {photos.map((photo: any, i: number) => (
           <div class="group relative aspect-square bg-forest-100 rounded-lg overflow-hidden">
             <img
-              src={urlFor(photo.image).width(400).height(400).fit('crop').url()}
+              src={urlFor(photo.image).width(400).height(400).fit('crop').crop('top').url()}
               alt={photo.caption || 'Photo of Rev. Koye-Ladele'}
-              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
               loading="lazy"
             />
             {photo.caption && (
