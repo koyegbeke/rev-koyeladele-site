@@ -5,7 +5,7 @@ export const client = createClient({
   projectId: 'dl8sdk46',
   dataset: 'production',
   apiVersion: '2024-01-01',
-  useCdn: true,
+  useCdn: false, // SSG build — always query primary API for fresh data
 })
 
 const builder = imageUrlBuilder(client)

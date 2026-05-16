@@ -1,7 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { client } from '../../lib/sanity';
-import { PortableText } from '@portabletext/react';
 
 export async function getStaticPaths() {
   const posts = await client.fetch(`
@@ -54,19 +53,34 @@ const formattedDate = post.publishedAt
 
     <div class="prose prose-lg max-w-none text-gray-700 leading-relaxed">
       {post.body?.map((block: any) => {
-        if (block._type === 'block') {
-          if (block.style === 'h2') {
-            return <h2 class="font-serif text-2xl text-forest-900 mt-10 mb-4" style="font-family: var(--font-serif)">{block.children?.map((c: any) => c.text).join('')}</h2>
+        if (block._type !== 'block') return null;
+
+        // Render each span with its inline marks (bold, italic, links)
+        const inline = block.children?.map((span: any) => {
+          if (span._type !== 'span') return null;
+          let node: any = span.text;
+          // Check for link mark
+          if (span.marks?.some((m: string) => {
+            const def = block.markDefs?.find((d: any) => d._key === m);
+            return def?._type === 'link';
+          })) {
+            const linkDef = block.markDefs?.find((d: any) =>
+              span.marks.includes(d._key) && d._type === 'link'
+            );
+            node = <a href={linkDef?.href} class="text-forest-700 underline hover:text-forest-500">{node}</a>;
           }
-          if (block.style === 'h3') {
-            return <h3 class="font-serif text-xl text-forest-800 mt-8 mb-3" style="font-family: var(--font-serif)">{block.children?.map((c: any) => c.text).join('')}</h3>
-          }
-          if (block.style === 'blockquote') {
-            return <blockquote class="border-l-4 border-[var(--color-gold)] pl-6 my-8 font-serif text-xl italic text-gray-600" style="font-family: var(--font-serif)">{block.children?.map((c: any) => c.text).join('')}</blockquote>
-          }
-          return <p class="mb-5">{block.children?.map((c: any) => c.text).join('')}</p>
-        }
-        return null;
+          if (span.marks?.includes('strong')) node = <strong>{node}</strong>;
+          if (span.marks?.includes('em'))     node = <em>{node}</em>;
+          return node;
+        });
+
+        if (block.style === 'h2')
+          return <h2 class="font-serif text-2xl text-forest-900 mt-10 mb-4" style="font-family: var(--font-serif)">{inline}</h2>;
+        if (block.style === 'h3')
+          return <h3 class="font-serif text-xl text-forest-800 mt-8 mb-3" style="font-family: var(--font-serif)">{inline}</h3>;
+        if (block.style === 'blockquote')
+          return <blockquote class="border-l-4 border-[var(--color-gold)] pl-6 my-8 font-serif text-xl italic text-gray-600" style="font-family: var(--font-serif)">{inline}</blockquote>;
+        return <p class="mb-5">{inline}</p>;
       })}
     </div>
 
