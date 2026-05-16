@@ -2,9 +2,8 @@
 import Layout from '../../layouts/Layout.astro';
 import { client } from '../../lib/sanity';
 
-const PAGE_SIZE = 10;
-
 export async function getStaticPaths({ paginate }: { paginate: Function }) {
+  const PAGE_SIZE = 10;
   const posts = await client.fetch(`
     *[_type == "post"] | order(publishedAt desc) {
       _id,
