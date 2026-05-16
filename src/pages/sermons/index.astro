@@ -14,7 +14,7 @@ const sermons = await client.fetch(`
     date,
     duration,
     scripture,
-    thumbnail
+    "thumbnailUrl": thumbnail.asset->url
   }
 `).catch(() => []);
 
@@ -30,7 +30,7 @@ const mappedSermons = sermons.map((s: any) => ({
   date: s.date || '',
   duration: s.duration || '',
   youtubeId: s.youtubeUrl ? youtubeIdFrom(s.youtubeUrl) : '',
-  thumbnailUrl: '',
+  thumbnailUrl: s.thumbnailUrl || '',
 }));
 ---
 
