@@ -1,0 +1,115 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { client } from '../../lib/sanity';
+
+const PAGE_SIZE = 10;
+
+export async function getStaticPaths({ paginate }: { paginate: Function }) {
+  const posts = await client.fetch(`
+    *[_type == "post"] | order(publishedAt desc) {
+      _id,
+      title,
+      "slug": slug.current,
+      publishedAt,
+      excerpt,
+      "linkedSermon": linkedSermon->{ title, "slug": slug.current }
+    }
+  `).catch(() => []);
+
+  return paginate(posts, { pageSize: PAGE_SIZE });
+}
+
+const { page } = Astro.props as any;
+const posts = page.data;
+---
+
+<Layout
+  title={page.currentPage === 1 ? "Reflections" : `Reflections — Page ${page.currentPage}`}
+  description="Written reflections on the sermons and teachings of Reverend Edward Adeniji Koye-Ladele."
+>
+
+  <section class="bg-forest-900 text-white py-16">
+    <div class="max-w-6xl mx-auto px-6">
+      <p class="text-[var(--color-gold-light)] text-xs tracking-widest uppercase mb-3">The Written Word</p>
+      <h1 class="font-serif text-5xl md:text-6xl" style="font-family: var(--font-serif)">Reflections</h1>
+      <p class="text-forest-200 mt-4 max-w-xl">
+        Selected messages in written form, with links to the original sermon.
+      </p>
+    </div>
+  </section>
+
+  <div class="max-w-4xl mx-auto px-6 py-16">
+    {posts.length > 0 ? (
+      <>
+        <div class="space-y-10">
+          {posts.map((post: any) => (
+            <article class="border-b border-[var(--color-cream-dark)] pb-10">
+              <a href={`/blog/${post.slug}`} class="group">
+                <p class="text-xs text-gray-400 mb-2">
+                  {new Date(post.publishedAt).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
+                <h2 class="font-serif text-3xl text-forest-900 group-hover:text-forest-700 transition-colors mb-3" style="font-family: var(--font-serif)">
+                  {post.title}
+                </h2>
+                {post.excerpt && (
+                  <p class="text-gray-600 leading-relaxed mb-4">{post.excerpt}</p>
+                )}
+                {post.linkedSermon && (
+                  <p class="text-xs text-gray-400 mb-3">
+                    Based on: <span class="text-forest-600">{post.linkedSermon.title}</span>
+                  </p>
+                )}
+                <span class="text-sm text-[var(--color-gold)] group-hover:text-[var(--color-gold-dark)] transition-colors">
+                  Read more →
+                </span>
+              </a>
+            </article>
+          ))}
+        </div>
+
+        {/* Pagination controls — only shown when there is more than one page */}
+        {page.lastPage > 1 && (
+          <nav class="flex items-center justify-between mt-16 pt-8 border-t border-[var(--color-cream-dark)]">
+            <div>
+              {page.url.prev ? (
+                <a
+                  href={page.url.prev}
+                  class="text-sm text-forest-700 hover:text-forest-500 transition-colors flex items-center gap-2"
+                >
+                  ← Newer
+                </a>
+              ) : (
+                <span class="text-sm text-gray-300">← Newer</span>
+              )}
+            </div>
+
+            <p class="text-xs text-gray-400 tracking-wide">
+              Page {page.currentPage} of {page.lastPage}
+            </p>
+
+            <div>
+              {page.url.next ? (
+                <a
+                  href={page.url.next}
+                  class="text-sm text-forest-700 hover:text-forest-500 transition-colors flex items-center gap-2"
+                >
+                  Older →
+                </a>
+              ) : (
+                <span class="text-sm text-gray-300">Older →</span>
+              )}
+            </div>
+          </nav>
+        )}
+      </>
+    ) : (
+      <div class="text-center py-24">
+        <p class="font-serif text-2xl text-forest-800 italic mb-3" style="font-family: var(--font-serif)">
+          Reflections are being written
+        </p>
+        <p class="text-gray-500 text-sm">Check back soon for written reflections on his teachings.</p>
+      </div>
+    )}
+  </div>
+
+</Layout>
